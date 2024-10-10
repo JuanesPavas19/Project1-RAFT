@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package database;
+
+// Mensajes para leer y escribir datos
+message ReadRequest {
+  string query = 1; // Por ejemplo, puede ser una consulta tipo SQL-like
+}
+
+message ReadResponse {
+  string result = 1; // Resultado de la lectura
+}
+
+message WriteRequest {
+  string data = 1; // Datos a escribir en formato CSV-like
+}
+
+message WriteResponse {
+  string status = 1; // Estado de la escritura
+}
+
+// Servicio para la base de datos
+service DatabaseService {
+  rpc ReadData(ReadRequest) returns (ReadResponse);
+  rpc WriteData(WriteRequest) returns (WriteResponse);
+  rpc ReplicateData (WriteRequest) returns (WriteResponse);  // Nuevo método para replicar
+}
