@@ -44,6 +44,7 @@ class ProxyService(service_pb2_grpc.DatabaseServiceServicer):
                             if self.current_leader != ip:
                                 self.current_leader = ip
                                 print(f"\n New leader identified: {self.current_leader}")
+                                self.send_active_list_to_all()  # Enviar lista de nodos activos
 
                     except grpc.RpcError as e:
                         if e.code() == grpc.StatusCode.UNAVAILABLE:
@@ -53,14 +54,16 @@ class ProxyService(service_pb2_grpc.DatabaseServiceServicer):
                             
                         # Si falla el ping, marcar como inactivo
                         self.server_status[ip] = {"role": "unknown", "state": "inactive"}
-                            
-                    
+                        
                 # log prints-------------------------------------------------------------!
                 # Imprimir el estado actual de los servidores
                 print("\nEstado actual de los servidores:")
                 for ip, status in self.server_status.items():
                     print(f"Servidor {ip} - Rol: {status['role']}, Estado: {status['state']}")
                 
+                # Enviar la lista de nodos activos a todos los db_servers al final de cada ciclo de ping, tambien cada que se encuentra leader
+                self.send_active_list_to_all()
+
                 # Esperar X segundos antes del próximo ping
                 time.sleep(5)
 
@@ -68,6 +71,32 @@ class ProxyService(service_pb2_grpc.DatabaseServiceServicer):
         ping_thread = threading.Thread(target=ping_servers)
         ping_thread.daemon = True  # El hilo se cerrará cuando el programa principal termine
         ping_thread.start()
+
+    # def send_active_list_to_all(self):
+    #     """Envía la lista de instancias activas a todos los nodos."""
+    #     active_instances = [ip for ip, status in self.server_status.items() if status["state"] == "active"]
+        
+    #     for ip, stub in self.db_channels.items():
+    #         try:
+    #             stub.UpdateActiveInstances(service_pb2.UpdateRequest(active_instances=active_instances))
+    #             print(f"Active instances list sent to {ip}: {active_instances}")
+    #         except grpc.RpcError as e:
+    #             print(f"Failed to send active instances list to {ip}: {e}")
+    
+    def send_active_list_to_all(self):
+        """Envía la lista de instancias activas a todos los nodos activos."""
+        active_instances = [ip for ip, status in self.server_status.items() if status["state"] == "active"]
+
+        for ip, stub in self.db_channels.items():
+            # Verificamos si el nodo está activo antes de enviar la lista
+            if self.server_status[ip]["state"] == "active":
+                try:
+                    # Enviamos la lista de instancias activas
+                    request = service_pb2.UpdateRequest(active_nodes=active_instances)
+                    stub.UpdateActiveNodes(request)
+                    print(f"Sent active node list to {ip}: {active_instances}")
+                except grpc.RpcError as e:
+                    print(f"Error sending active node list to {ip}: {e}")
 
     def find_leader(self):
         """Encuentra y asigna el líder actual."""

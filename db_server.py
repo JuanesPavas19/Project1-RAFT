@@ -19,7 +19,6 @@ TIMEOUT = random.uniform(1.5, 3.0)
 LAST_HEARTBEAT = time.time()
 
 
-OTHER_DB_NODES = ['10.0.2.100', '10.0.2.164']
 
 class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
 
@@ -88,6 +87,29 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
         global ROLE
         # Devolver el role (follower, leader, etc.) y el estado (activo)
         return service_pb2.PingResponse(role=ROLE, state="active")
+    
+    # Metodods para hablar con el Proxy-------------------------------------------------
+    
+    def UpdateActiveNodes(self, request, context):
+        global OTHER_DB_NODES
+        print(f"[{ROLE}] - Received active node list: {request.active_nodes}")
+
+        # Actualizar la lista de nodos activos
+        OTHER_DB_NODES = list(request.active_nodes)
+
+        return service_pb2.UpdateResponse(status="SUCCESS")
+    
+    def request_active_nodes_from_proxy(proxy_ip):
+        try:
+            channel = grpc.insecure_channel(f'{proxy_ip}:50051')  # Conectar al proxy
+            stub = service_pb2_grpc.DatabaseServiceStub(channel)
+            request = service_pb2.PingRequest()  # O algún otro tipo de request que tu proxy pueda manejar
+            response = stub.Ping(request)  # O el método que maneje el proxy para enviar nodos activos
+            print(f"Received active nodes from proxy: {response.active_nodes}")
+            return list(response.active_nodes)  # Convertirlo a lista
+        except Exception as e:
+            print(f"Error fetching active nodes from proxy: {e}")
+            return []
         
 
 def start_election():
@@ -144,11 +166,20 @@ def start_heartbeats():
         time.sleep(1) 
 
 def serve():
-    global ROLE, CURRENT_TERM, VOTED_FOR, LEADER_ID
+    global ROLE, CURRENT_TERM, VOTED_FOR, LEADER_ID, OTHER_DB_NODES
     ROLE = 'follower'
     CURRENT_TERM = 0
     VOTED_FOR = None
     LEADER_ID = None
+    
+    # Solicitar la lista de nodos activos al proxy
+    proxy_ip = '3.227.12.220'  # La IP del proxy
+    OTHER_DB_NODES = DatabaseService.request_active_nodes_from_proxy(proxy_ip)
+    
+    if OTHER_DB_NODES:
+        print(f"Initial active nodes received from proxy: {OTHER_DB_NODES}")
+    else:
+        print("Failed to retrieve active nodes from proxy. Starting with an empty list.")
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     service_pb2_grpc.add_DatabaseServiceServicer_to_server(DatabaseService(), server)
