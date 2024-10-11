@@ -161,9 +161,17 @@ def start_heartbeats():
                 stub = service_pb2_grpc.DatabaseServiceStub(channel)
                 heartbeat_request = service_pb2.AppendEntriesRequest(leader_id='self')
                 stub.AppendEntries(heartbeat_request)
-            except Exception as e:
-                print(f"[{ROLE}] - Error sending heartbeat to node {node_ip}: {e}")
-        time.sleep(1) 
+                print(f"[{ROLE}] - Heartbeat successfully sent to node {node_ip}")
+            except grpc.RpcError as e:
+                status_code = e.code()
+                if status_code == grpc.StatusCode.UNAVAILABLE:
+                    print(f"[{ROLE}] - Node {node_ip} is unreachable (Status: UNAVAILABLE)")
+                elif status_code == grpc.StatusCode.CANCELLED:
+                    print(f"[{ROLE}] - Heartbeat to node {node_ip} was cancelled (Status: CANCELLED)")
+                else:
+                    print(f"[{ROLE}] - Unexpected error sending heartbeat to node {node_ip}: {e}")
+        
+        time.sleep(1)
 
 def serve():
     global ROLE, CURRENT_TERM, VOTED_FOR, LEADER_ID, OTHER_DB_NODES

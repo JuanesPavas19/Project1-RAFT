@@ -37,8 +37,11 @@ class ProxyService(service_pb2_grpc.DatabaseServiceServicer):
                     try:
                         # Enviar el ping y recibir el estado
                         response = stub.Ping(service_pb2.PingRequest(message="ping"))
+                        if self.server_status[ip]["state"] != "active" or self.server_status[ip]["role"] != response.role:
+                            # Solo mostrar si hay un cambio en el estado o rol del nodo
+                            print(f"Node {ip} is now active with role {response.role}")
                         self.server_status[ip] = {"role": response.role, "state": response.state}
-                        
+                    
                         # Si encontramos un nuevo líder, actualizar
                         if response.role == "leader":
                             if self.current_leader != ip:
@@ -47,21 +50,21 @@ class ProxyService(service_pb2_grpc.DatabaseServiceServicer):
                                 self.send_active_list_to_all()  # Enviar lista de nodos activos
 
                     except grpc.RpcError as e:
-                        if e.code() == grpc.StatusCode.UNAVAILABLE:
-                            print(f"Node {ip} is unavailable (Connection refused)")
-                        else:
-                            print(f"Error contacting node {ip}: {e}")
-                            
-                        # Si falla el ping, marcar como inactivo
-                        self.server_status[ip] = {"role": "unknown", "state": "inactive"}
-                        
-                # log prints-------------------------------------------------------------!
-                # Imprimir el estado actual de los servidores
+                        if self.server_status[ip]["state"] != "inactive":
+                            # Solo mostrar el error si el nodo no estaba ya marcado como inactivo
+                            if e.code() == grpc.StatusCode.UNAVAILABLE:
+                                print(f"Node {ip} is unavailable (Connection refused)")
+                            else:
+                                print(f"Error contacting node {ip}: {e.details() if e.details() else 'Unknown error'}")
+                            # Si falla el ping, marcar como inactivo
+                            self.server_status[ip] = {"role": "unknown", "state": "inactive"}
+                    
+                # Imprimir el estado actual de los servidores solo si hubo cambios
                 print("\nEstado actual de los servidores:")
                 for ip, status in self.server_status.items():
                     print(f"Servidor {ip} - Rol: {status['role']}, Estado: {status['state']}")
-                
-                # Enviar la lista de nodos activos a todos los db_servers al final de cada ciclo de ping, tambien cada que se encuentra leader
+            
+                # Enviar la lista de nodos activos al final de cada ciclo de ping
                 self.send_active_list_to_all()
 
                 # Esperar X segundos antes del próximo ping
@@ -96,7 +99,10 @@ class ProxyService(service_pb2_grpc.DatabaseServiceServicer):
                     stub.UpdateActiveNodes(request)
                     print(f"Sent active node list to {ip}: {active_instances}")
                 except grpc.RpcError as e:
-                    print(f"Error sending active node list to {ip}: {e}")
+                    # Capturamos el error solo si no es repetido
+                    print(f"Error sending active node list to {ip}: {e.details() if e.details() else 'Unknown error'}")
+                    # Marcar como inactivo en caso de error
+                    self.server_status[ip]["state"] = "inactive"
 
     def find_leader(self):
         """Encuentra y asigna el líder actual."""

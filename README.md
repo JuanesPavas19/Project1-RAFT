@@ -42,3 +42,4 @@ ssh -i bit.pem ubuntu@10.0.2.172
  rm -r service.proto service_pb2.py service_pb2_grpc.py db_server.py database.csv __pycache__
   rm -r service.proto service_pb2.py service_pb2_grpc.py proxy_server.py  __pycache__
   rm -r servie.proto service_pb2.py service_pb2_grpc.py
+  rm db_server.py
