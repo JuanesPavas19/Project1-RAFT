@@ -26,7 +26,7 @@ if _version_not_supported:
 
 
 class DatabaseServiceStub(object):
-    """Servicio para la base de datos
+    """Servicio para la base de datos y Raft
     """
 
     def __init__(self, channel):
@@ -45,15 +45,20 @@ class DatabaseServiceStub(object):
                 request_serializer=service__pb2.WriteRequest.SerializeToString,
                 response_deserializer=service__pb2.WriteResponse.FromString,
                 _registered_method=True)
-        self.ReplicateData = channel.unary_unary(
-                '/database.DatabaseService/ReplicateData',
-                request_serializer=service__pb2.WriteRequest.SerializeToString,
-                response_deserializer=service__pb2.WriteResponse.FromString,
+        self.RequestVote = channel.unary_unary(
+                '/database.DatabaseService/RequestVote',
+                request_serializer=service__pb2.VoteRequest.SerializeToString,
+                response_deserializer=service__pb2.VoteResponse.FromString,
+                _registered_method=True)
+        self.AppendEntries = channel.unary_unary(
+                '/database.DatabaseService/AppendEntries',
+                request_serializer=service__pb2.AppendEntriesRequest.SerializeToString,
+                response_deserializer=service__pb2.AppendEntriesResponse.FromString,
                 _registered_method=True)
 
 
 class DatabaseServiceServicer(object):
-    """Servicio para la base de datos
+    """Servicio para la base de datos y Raft
     """
 
     def ReadData(self, request, context):
@@ -68,9 +73,14 @@ class DatabaseServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def ReplicateData(self, request, context):
-        """Nuevo método para replicar
-        """
+    def RequestVote(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AppendEntries(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -88,10 +98,15 @@ def add_DatabaseServiceServicer_to_server(servicer, server):
                     request_deserializer=service__pb2.WriteRequest.FromString,
                     response_serializer=service__pb2.WriteResponse.SerializeToString,
             ),
-            'ReplicateData': grpc.unary_unary_rpc_method_handler(
-                    servicer.ReplicateData,
-                    request_deserializer=service__pb2.WriteRequest.FromString,
-                    response_serializer=service__pb2.WriteResponse.SerializeToString,
+            'RequestVote': grpc.unary_unary_rpc_method_handler(
+                    servicer.RequestVote,
+                    request_deserializer=service__pb2.VoteRequest.FromString,
+                    response_serializer=service__pb2.VoteResponse.SerializeToString,
+            ),
+            'AppendEntries': grpc.unary_unary_rpc_method_handler(
+                    servicer.AppendEntries,
+                    request_deserializer=service__pb2.AppendEntriesRequest.FromString,
+                    response_serializer=service__pb2.AppendEntriesResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -102,7 +117,7 @@ def add_DatabaseServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class DatabaseService(object):
-    """Servicio para la base de datos
+    """Servicio para la base de datos y Raft
     """
 
     @staticmethod
@@ -160,7 +175,7 @@ class DatabaseService(object):
             _registered_method=True)
 
     @staticmethod
-    def ReplicateData(request,
+    def RequestVote(request,
             target,
             options=(),
             channel_credentials=None,
@@ -173,9 +188,36 @@ class DatabaseService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/database.DatabaseService/ReplicateData',
-            service__pb2.WriteRequest.SerializeToString,
-            service__pb2.WriteResponse.FromString,
+            '/database.DatabaseService/RequestVote',
+            service__pb2.VoteRequest.SerializeToString,
+            service__pb2.VoteResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AppendEntries(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/database.DatabaseService/AppendEntries',
+            service__pb2.AppendEntriesRequest.SerializeToString,
+            service__pb2.AppendEntriesResponse.FromString,
             options,
             channel_credentials,
             insecure,

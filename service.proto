@@ -19,9 +19,28 @@ message WriteResponse {
   string status = 1; // Estado de la escritura
 }
 
-// Servicio para la base de datos
+// Mensajes para el algoritmo Raft
+message VoteRequest {
+  int32 term = 1;
+  string candidate_id = 2;
+}
+
+message VoteResponse {
+  bool granted = 1;
+}
+
+message AppendEntriesRequest {
+  string leader_id = 1;
+}
+
+message AppendEntriesResponse {
+  bool success = 1;
+}
+
+// Servicio para la base de datos y Raft
 service DatabaseService {
   rpc ReadData(ReadRequest) returns (ReadResponse);
   rpc WriteData(WriteRequest) returns (WriteResponse);
-  rpc ReplicateData (WriteRequest) returns (WriteResponse);  // Nuevo método para replicar
+  rpc RequestVote(VoteRequest) returns (VoteResponse);
+  rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
 }
