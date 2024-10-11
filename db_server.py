@@ -19,7 +19,7 @@ TIMEOUT = random.uniform(1.5, 3.0)
 LAST_HEARTBEAT = time.time()
 
 
-OTHER_DB_NODES = ['10.0.2.162', '10.0.2.234']
+OTHER_DB_NODES = ['10.0.2.100', '10.0.2.164']
 
 class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
 
@@ -83,6 +83,12 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
         TIMEOUT = random.uniform(1.5, 3.0)  # Restablecer el timeout aleatorio
         print(f"[{ROLE}] - Received heartbeat from leader {LEADER_ID}")
         return service_pb2.AppendEntriesResponse(success=True)
+    
+    def Ping(self, request, context):
+        global ROLE
+        # Devolver el role (follower, leader, etc.) y el estado (activo)
+        return service_pb2.PingResponse(role=ROLE, state="active")
+        
 
 def start_election():
     global ROLE, CURRENT_TERM, VOTED_FOR, LEADER_ID, LAST_HEARTBEAT

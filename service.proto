@@ -37,10 +37,21 @@ message AppendEntriesResponse {
   bool success = 1;
 }
 
+// Mensaje para el Ping
+message PingRequest {
+  string message = 1; // Solo para probar la conexión
+}
+
+message PingResponse {
+  string role = 1;  // Follower, leader, etc.
+  string state = 2; // Active o Inactive
+}
+
 // Servicio para la base de datos y Raft
 service DatabaseService {
   rpc ReadData(ReadRequest) returns (ReadResponse);
   rpc WriteData(WriteRequest) returns (WriteResponse);
   rpc RequestVote(VoteRequest) returns (VoteResponse);
   rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
+  rpc Ping(PingRequest) returns (PingResponse);  // Agregar el nuevo servicio
 }

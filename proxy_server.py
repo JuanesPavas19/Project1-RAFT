@@ -3,11 +3,12 @@ import service_pb2_grpc
 import grpc
 from concurrent import futures
 import random
+import time, threading
 
 DB_SERVERS = [
-    {'host': '10.0.2.250', 'port': '50051'},   
-    {'host': '10.0.2.234', 'port': '50051'},   
-    {'host': '10.0.2.167', 'port': '50051'}    
+    {'host': '10.0.2.172', 'port': '50051'},   
+    {'host': '10.0.2.100', 'port': '50051'},   
+    {'host': '10.0.2.164', 'port': '50051'}    
 ]
 
 class ProxyService(service_pb2_grpc.DatabaseServiceServicer):
@@ -15,34 +16,75 @@ class ProxyService(service_pb2_grpc.DatabaseServiceServicer):
     def __init__(self):
         self.db_channels = {}
         for server in DB_SERVERS:
-            channel = grpc.insecure_channel(f'{server["host"]}:{server["port"]}')
+            # Crear el canal con timeout para mantener la conexión viva
+            channel = grpc.insecure_channel(f'{server["host"]}:{server["port"]}', options=[
+                ('grpc.keepalive_timeout_ms', 1000)  # Timeout de 1 segundo
+            ])
             stub = service_pb2_grpc.DatabaseServiceStub(channel)
             self.db_channels[server["host"]] = stub
 
         self.current_leader = None
+        self.server_status = {server["host"]: {"role": "unknown", "state": "inactive"} for server in DB_SERVERS}
+
+        # Iniciar el ciclo de pings
+        self.start_ping_loop()
+
+    def start_ping_loop(self):
+        """Inicia un ciclo que realiza pings periódicos a los db_servers."""
+        def ping_servers():
+            while True:
+                for ip, stub in self.db_channels.items():
+                    try:
+                        # Enviar el ping y recibir el estado
+                        response = stub.Ping(service_pb2.PingRequest(message="ping"))
+                        self.server_status[ip] = {"role": response.role, "state": response.state}
+                        
+                        # Si encontramos un nuevo líder, actualizar
+                        if response.role == "leader":
+                            if self.current_leader != ip:
+                                self.current_leader = ip
+                                print(f"\n New leader identified: {self.current_leader}")
+
+                    except grpc.RpcError as e:
+                        if e.code() == grpc.StatusCode.UNAVAILABLE:
+                            print(f"Node {ip} is unavailable (Connection refused)")
+                        else:
+                            print(f"Error contacting node {ip}: {e}")
+                            
+                        # Si falla el ping, marcar como inactivo
+                        self.server_status[ip] = {"role": "unknown", "state": "inactive"}
+                            
+                    
+                # log prints-------------------------------------------------------------!
+                # Imprimir el estado actual de los servidores
+                print("\nEstado actual de los servidores:")
+                for ip, status in self.server_status.items():
+                    print(f"Servidor {ip} - Rol: {status['role']}, Estado: {status['state']}")
+                
+                # Esperar X segundos antes del próximo ping
+                time.sleep(5)
+
+        # Ejecutar el ping en un hilo separado
+        ping_thread = threading.Thread(target=ping_servers)
+        ping_thread.daemon = True  # El hilo se cerrará cuando el programa principal termine
+        ping_thread.start()
 
     def find_leader(self):
-        """ Método para identificar cuál nodo es el líder """
-        for ip, stub in self.db_channels.items():
-            try:
-                # Solicitar un heartbeat para verificar si el nodo es el lider
-                response = stub.AppendEntries(service_pb2.AppendEntriesRequest(leader_id=''))
-                if response.success:
-                    self.current_leader = ip
-                    print(f"Leader identified: {self.current_leader}")
-                    return
-            except Exception as e:
-                print(f"Error contacting node {ip}: {e}")
+        """Encuentra y asigna el líder actual."""
+        for ip, status in self.server_status.items():
+            if status["role"] == "leader" and status["state"] == "active":
+                self.current_leader = ip
+                print(f"Líder encontrado: {self.current_leader}")
+                return
 
-        print("No leader found.")
+        print("No se encontró líder activo.")
         self.current_leader = None
 
     def ReadData(self, request, context):
         if self.current_leader is None:
             self.find_leader()
 
-        # Seleccionar un follower aleatorio si hay un lider identificado
-        followers = [ip for ip in self.db_channels.keys() if ip != self.current_leader]
+        followers = [ip for ip, status in self.server_status.items() if status["role"] == "follower" and status["state"] == "active"]
         if followers:
             follower_stub = random.choice([self.db_channels[ip] for ip in followers])
             response = follower_stub.ReadData(request)

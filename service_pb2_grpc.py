@@ -55,6 +55,11 @@ class DatabaseServiceStub(object):
                 request_serializer=service__pb2.AppendEntriesRequest.SerializeToString,
                 response_deserializer=service__pb2.AppendEntriesResponse.FromString,
                 _registered_method=True)
+        self.Ping = channel.unary_unary(
+                '/database.DatabaseService/Ping',
+                request_serializer=service__pb2.PingRequest.SerializeToString,
+                response_deserializer=service__pb2.PingResponse.FromString,
+                _registered_method=True)
 
 
 class DatabaseServiceServicer(object):
@@ -85,6 +90,13 @@ class DatabaseServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Ping(self, request, context):
+        """Agregar el nuevo servicio
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_DatabaseServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -107,6 +119,11 @@ def add_DatabaseServiceServicer_to_server(servicer, server):
                     servicer.AppendEntries,
                     request_deserializer=service__pb2.AppendEntriesRequest.FromString,
                     response_serializer=service__pb2.AppendEntriesResponse.SerializeToString,
+            ),
+            'Ping': grpc.unary_unary_rpc_method_handler(
+                    servicer.Ping,
+                    request_deserializer=service__pb2.PingRequest.FromString,
+                    response_serializer=service__pb2.PingResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -218,6 +235,33 @@ class DatabaseService(object):
             '/database.DatabaseService/AppendEntries',
             service__pb2.AppendEntriesRequest.SerializeToString,
             service__pb2.AppendEntriesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Ping(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/database.DatabaseService/Ping',
+            service__pb2.PingRequest.SerializeToString,
+            service__pb2.PingResponse.FromString,
             options,
             channel_credentials,
             insecure,
