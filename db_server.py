@@ -169,7 +169,9 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
         print(f"[{ROLE}] - Received active node list: {request.active_nodes}")
 
         # Actualizar la lista de nodos activos
-        OTHER_DB_NODES = list(request.active_nodes)
+        ACTIVE_DB_NODES = list(request.active_nodes)
+        OTHER_DB_NODES = [ip for ip in ACTIVE_DB_NODES if ip != SERVER_IP]
+        print(f"[{ROLE}] - Active node list was updated: {OTHER_DB_NODES}")
 
         return service_pb2.UpdateResponse(status="SUCCESS")
     
@@ -180,7 +182,9 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
             request = service_pb2.PingRequest()  # O algún otro tipo de request que tu proxy pueda manejar
             response = stub.Ping(request)  # O el método que maneje el proxy para enviar nodos activos
             print(f"Received active nodes from proxy: {response.active_nodes}")
-            return list(response.active_nodes)  # Convertirlo a lista
+            ACTIVE_DB_NODES = list(response.active_nodes)  # Convertirlo a lista
+            OTHER_DB_NODES = [ip for ip in ACTIVE_DB_NODES if ip != SERVER_IP]
+            return OTHER_DB_NODES 
         except Exception as e:
             print(f"Error fetching active nodes from proxy: {e}")
             return []
