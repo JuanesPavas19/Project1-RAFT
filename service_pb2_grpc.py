@@ -60,6 +60,16 @@ class DatabaseServiceStub(object):
                 request_serializer=service__pb2.PingRequest.SerializeToString,
                 response_deserializer=service__pb2.PingResponse.FromString,
                 _registered_method=True)
+        self.UpdateActiveNodes = channel.unary_unary(
+                '/database.DatabaseService/UpdateActiveNodes',
+                request_serializer=service__pb2.UpdateRequest.SerializeToString,
+                response_deserializer=service__pb2.UpdateResponse.FromString,
+                _registered_method=True)
+        self.ReplicateData = channel.unary_unary(
+                '/database.DatabaseService/ReplicateData',
+                request_serializer=service__pb2.WriteRequest.SerializeToString,
+                response_deserializer=service__pb2.WriteResponse.FromString,
+                _registered_method=True)
 
 
 class DatabaseServiceServicer(object):
@@ -97,6 +107,19 @@ class DatabaseServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def UpdateActiveNodes(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReplicateData(self, request, context):
+        """Agregar el método de replicación
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_DatabaseServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -124,6 +147,16 @@ def add_DatabaseServiceServicer_to_server(servicer, server):
                     servicer.Ping,
                     request_deserializer=service__pb2.PingRequest.FromString,
                     response_serializer=service__pb2.PingResponse.SerializeToString,
+            ),
+            'UpdateActiveNodes': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateActiveNodes,
+                    request_deserializer=service__pb2.UpdateRequest.FromString,
+                    response_serializer=service__pb2.UpdateResponse.SerializeToString,
+            ),
+            'ReplicateData': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReplicateData,
+                    request_deserializer=service__pb2.WriteRequest.FromString,
+                    response_serializer=service__pb2.WriteResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -262,6 +295,60 @@ class DatabaseService(object):
             '/database.DatabaseService/Ping',
             service__pb2.PingRequest.SerializeToString,
             service__pb2.PingResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateActiveNodes(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/database.DatabaseService/UpdateActiveNodes',
+            service__pb2.UpdateRequest.SerializeToString,
+            service__pb2.UpdateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ReplicateData(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/database.DatabaseService/ReplicateData',
+            service__pb2.WriteRequest.SerializeToString,
+            service__pb2.WriteResponse.FromString,
             options,
             channel_credentials,
             insecure,

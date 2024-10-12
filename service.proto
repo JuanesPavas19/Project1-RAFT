@@ -31,6 +31,7 @@ message VoteResponse {
 
 message AppendEntriesRequest {
   string leader_id = 1;
+  repeated string entries = 2; // Nuevas entradas a replicar
 }
 
 message AppendEntriesResponse {
@@ -49,11 +50,11 @@ message PingResponse {
 }
 
 message UpdateRequest {
-    repeated string active_nodes = 1;
+  repeated string active_nodes = 1;
 }
 
 message UpdateResponse {
-    string status = 1;
+  string status = 1;
 }
 
 // Servicio para la base de datos y Raft
@@ -64,4 +65,5 @@ service DatabaseService {
   rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
   rpc Ping(PingRequest) returns (PingResponse);  // Agregar el nuevo servicio
   rpc UpdateActiveNodes(UpdateRequest) returns (UpdateResponse);
+  rpc ReplicateData(WriteRequest) returns (WriteResponse); // Agregar el método de replicación
 }
