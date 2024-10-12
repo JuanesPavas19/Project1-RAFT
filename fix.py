@@ -7,13 +7,9 @@ import os
 import time
 import random
 from threading import Thread
-import socket # para leer ip propia
 
 DB_FILE = 'database.csv'
 
-# Obtener la IP privada del servidor
-def get_private_ip():
-    return socket.gethostbyname(socket.gethostname())
 
 ROLE = 'follower'
 CURRENT_TERM = 0
@@ -22,20 +18,7 @@ LEADER_ID = None
 TIMEOUT = random.uniform(1.5, 3.0) 
 LAST_HEARTBEAT = time.time()
 
-#OTHER_DB_NODES = ['10.0.2.100', '10.0.2.164']
-# Establecer la IP del servidor
-SERVER_IP = get_private_ip()
-# Lista de nodos, incluyendo la IP del servidor
-ALL_DB_NODES = [
-    '10.0.2.172',
-    '10.0.2.100',
-    '10.0.2.164'
-]
-
-# Filtrar nodos que no sean la IP del servidor
-OTHER_DB_NODES = [ip for ip in ALL_DB_NODES if ip != SERVER_IP]
-print(OTHER_DB_NODES)
-
+OTHER_DB_NODES = ['10.0.2.100', '10.0.2.164']
 
 class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
 
@@ -82,20 +65,15 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
         term = request.term
         candidate_id = request.candidate_id
 
-        try:
-            # Votar si el termino del candidato es mayor al actual y aun no ha votado en este termino
-            if term > CURRENT_TERM or (term == CURRENT_TERM and VOTED_FOR is None):
-                VOTED_FOR = candidate_id
-                CURRENT_TERM = term
-                print(f"[{ROLE}] - Voted for {candidate_id} in term {term}")
-                return service_pb2.VoteResponse(granted=True)
-            
-            print(f"[{ROLE}] - Vote denied to {candidate_id} in term {term}")
-            return service_pb2.VoteResponse(granted=False)
-        except grpc.RpcError as e:
-            # Manejar el error de conexión y mostrar un mensaje simplificado
-            print(f"[{ROLE}] - Error al contactar candidato {candidate_id}: {e.code()}")
-            return service_pb2.VoteResponse(granted=False)
+        # Votar si el termino del candidato es mayor al actual y aun no ha votado en este termino
+        if term > CURRENT_TERM or (term == CURRENT_TERM and VOTED_FOR is None):
+            VOTED_FOR = candidate_id
+            CURRENT_TERM = term
+            print(f"[{ROLE}] - Voted for {candidate_id} in term {term}")
+            return service_pb2.VoteResponse(granted=True)
+        
+        print(f"[{ROLE}] - Vote denied to {candidate_id} in term {term}")
+        return service_pb2.VoteResponse(granted=False)
 
     def AppendEntries(self, request, context):
         global ROLE, LEADER_ID, TIMEOUT, LAST_HEARTBEAT
@@ -159,8 +137,7 @@ def start_election():
                     if vote_response.granted:
                         vote_count += 1
                 except Exception as e:
-                    #print(f"[{ROLE}] - Error contacting node {node_ip}: {e}")
-                    print(f"[{ROLE}] - Error contacting node {node_ip}")
+                    print(f"[{ROLE}] - Error contacting node {node_ip}: {e}")
 
             # Si consigue la mayoria de votos se convierte en lider
             if vote_count > (len(OTHER_DB_NODES) + 1) // 2:

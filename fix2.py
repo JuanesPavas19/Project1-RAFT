@@ -159,8 +159,7 @@ def start_election():
                     if vote_response.granted:
                         vote_count += 1
                 except Exception as e:
-                    #print(f"[{ROLE}] - Error contacting node {node_ip}: {e}")
-                    print(f"[{ROLE}] - Error contacting node {node_ip}")
+                    print(f"[{ROLE}] - Error contacting node {node_ip}: {e}")
 
             # Si consigue la mayoria de votos se convierte en lider
             if vote_count > (len(OTHER_DB_NODES) + 1) // 2:
