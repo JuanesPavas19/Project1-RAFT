@@ -26,7 +26,7 @@ if _version_not_supported:
 
 
 class DatabaseServiceStub(object):
-    """Servicio para la base de datos y Raft
+    """Servicio para la BD y Raft
     """
 
     def __init__(self, channel):
@@ -65,6 +65,11 @@ class DatabaseServiceStub(object):
                 request_serializer=service__pb2.UpdateRequest.SerializeToString,
                 response_deserializer=service__pb2.UpdateResponse.FromString,
                 _registered_method=True)
+        self.DegradeToFollower = channel.unary_unary(
+                '/database.DatabaseService/DegradeToFollower',
+                request_serializer=service__pb2.DegradeRequest.SerializeToString,
+                response_deserializer=service__pb2.DegradeResponse.FromString,
+                _registered_method=True)
         self.ReplicateData = channel.unary_unary(
                 '/database.DatabaseService/ReplicateData',
                 request_serializer=service__pb2.WriteRequest.SerializeToString,
@@ -73,7 +78,7 @@ class DatabaseServiceStub(object):
 
 
 class DatabaseServiceServicer(object):
-    """Servicio para la base de datos y Raft
+    """Servicio para la BD y Raft
     """
 
     def ReadData(self, request, context):
@@ -101,8 +106,7 @@ class DatabaseServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def Ping(self, request, context):
-        """Agregar el nuevo servicio
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -113,9 +117,14 @@ class DatabaseServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def DegradeToFollower(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def ReplicateData(self, request, context):
-        """Agregar el método de replicación
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -153,6 +162,11 @@ def add_DatabaseServiceServicer_to_server(servicer, server):
                     request_deserializer=service__pb2.UpdateRequest.FromString,
                     response_serializer=service__pb2.UpdateResponse.SerializeToString,
             ),
+            'DegradeToFollower': grpc.unary_unary_rpc_method_handler(
+                    servicer.DegradeToFollower,
+                    request_deserializer=service__pb2.DegradeRequest.FromString,
+                    response_serializer=service__pb2.DegradeResponse.SerializeToString,
+            ),
             'ReplicateData': grpc.unary_unary_rpc_method_handler(
                     servicer.ReplicateData,
                     request_deserializer=service__pb2.WriteRequest.FromString,
@@ -167,7 +181,7 @@ def add_DatabaseServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class DatabaseService(object):
-    """Servicio para la base de datos y Raft
+    """Servicio para la BD y Raft
     """
 
     @staticmethod
@@ -322,6 +336,33 @@ class DatabaseService(object):
             '/database.DatabaseService/UpdateActiveNodes',
             service__pb2.UpdateRequest.SerializeToString,
             service__pb2.UpdateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DegradeToFollower(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/database.DatabaseService/DegradeToFollower',
+            service__pb2.DegradeRequest.SerializeToString,
+            service__pb2.DegradeResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -11,6 +11,7 @@ import socket # para leer ip propia
 
 """El Contenido de db_server.py y db_server1test.py son el mismo solo que uno esta con algunos comentarios para facilitar lectura de terminal en pruebas :)"""
 
+FIRST_RUN = True
 DB_FILE = 'database.csv'
 
 # Verificar si el archivo ya existe
@@ -36,7 +37,7 @@ ROLE = 'follower'
 CURRENT_TERM = 0
 VOTED_FOR = None
 LEADER_ID = None
-TIMEOUT = random.uniform(1.5, 3.0)
+TIMEOUT = random.uniform(8.0, 10.0) if FIRST_RUN else random.uniform(1.5, 3.0)
 LAST_HEARTBEAT = time.time()
 
 #OTHER_DB_NODES = ['10.0.2.100', '10.0.2.164'] #Example
@@ -149,10 +150,15 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
             return service_pb2.VoteResponse(granted=False)
 
     def AppendEntries(self, request, context):
-        global ROLE, LEADER_ID, TIMEOUT, LAST_HEARTBEAT
+        global ROLE, LEADER_ID, TIMEOUT, LAST_HEARTBEAT, FIRST_RUN
         LEADER_ID = request.leader_id
         LAST_HEARTBEAT = time.time()  # Actualizar el tiempo del ultimo heartbeat recibido
         TIMEOUT = random.uniform(1.5, 3.0)  # Restablecer el timeout aleatorio
+        
+        if FIRST_RUN:
+            FIRST_RUN = False
+            TIMEOUT = random.uniform(1.5, 3.0)
+        
         #print
         print(f"[{ROLE}] - Received heartbeat from leader {LEADER_ID}")
         return service_pb2.AppendEntriesResponse(success=True)
@@ -161,6 +167,13 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
         global ROLE
         # Devolver el role (follower, leader, etc.) y el estado (activo)
         return service_pb2.PingResponse(role=ROLE, state="active")
+    
+    #Degradar un líder a follower
+    def DegradeToFollower(self, request, context):
+        global ROLE
+        print(f"[{ROLE}] - Degrading to follower by request.")
+        ROLE = 'follower'
+        return service_pb2.DegradeResponse(status="SUCCESS")
     
     # Metodods para hablar con el Proxy-------------------------------------------------
     
@@ -205,7 +218,7 @@ def start_election():
             LEADER_ID = None
 
             # Pedir votos a los otros nodos y votarse a si mismo
-            vote_count = 1  
+            vote_count = 1
             for node_ip in OTHER_DB_NODES:
                 try:
                     channel = grpc.insecure_channel(f'{node_ip}:50051')
@@ -244,13 +257,14 @@ def start_heartbeats():
                 #print
                 print(f"[{ROLE}] - Heartbeat successfully sent to node {node_ip}")
             except grpc.RpcError as e:
-                status_code = e.code()
-                if status_code == grpc.StatusCode.UNAVAILABLE:
-                    print(f"[{ROLE}] - Node {node_ip} is unreachable (Status: UNAVAILABLE)")
-                elif status_code == grpc.StatusCode.CANCELLED:
-                    print(f"[{ROLE}] - Heartbeat to node {node_ip} was cancelled (Status: CANCELLED)")
-                else:
-                    print(f"[{ROLE}] - Unexpected error sending heartbeat to node {node_ip}: {e}")
+                print(f"[{ROLE}] - Error sending heartbeat to node {node_ip}: {e}")
+                # status_code = e.code()
+                # if status_code == grpc.StatusCode.UNAVAILABLE:
+                #     print(f"[{ROLE}] - Node {node_ip} is unreachable (Status: UNAVAILABLE)")
+                # elif status_code == grpc.StatusCode.CANCELLED:
+                #     print(f"[{ROLE}] - Heartbeat to node {node_ip} was cancelled (Status: CANCELLED)")
+                # else:
+                #     print(f"[{ROLE}] - Unexpected error sending heartbeat to node {node_ip}: {e}")
         
         time.sleep(1)
 
