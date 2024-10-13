@@ -75,6 +75,16 @@ class DatabaseServiceStub(object):
                 request_serializer=service__pb2.WriteRequest.SerializeToString,
                 response_deserializer=service__pb2.WriteResponse.FromString,
                 _registered_method=True)
+        self.RequestLeader = channel.unary_unary(
+                '/database.DatabaseService/RequestLeader',
+                request_serializer=service__pb2.LeaderRequest.SerializeToString,
+                response_deserializer=service__pb2.LeaderResponse.FromString,
+                _registered_method=True)
+        self.RequestDatabase = channel.unary_unary(
+                '/database.DatabaseService/RequestDatabase',
+                request_serializer=service__pb2.DatabaseRequest.SerializeToString,
+                response_deserializer=service__pb2.DatabaseResponse.FromString,
+                _registered_method=True)
 
 
 class DatabaseServiceServicer(object):
@@ -129,6 +139,18 @@ class DatabaseServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def RequestLeader(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RequestDatabase(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_DatabaseServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -171,6 +193,16 @@ def add_DatabaseServiceServicer_to_server(servicer, server):
                     servicer.ReplicateData,
                     request_deserializer=service__pb2.WriteRequest.FromString,
                     response_serializer=service__pb2.WriteResponse.SerializeToString,
+            ),
+            'RequestLeader': grpc.unary_unary_rpc_method_handler(
+                    servicer.RequestLeader,
+                    request_deserializer=service__pb2.LeaderRequest.FromString,
+                    response_serializer=service__pb2.LeaderResponse.SerializeToString,
+            ),
+            'RequestDatabase': grpc.unary_unary_rpc_method_handler(
+                    servicer.RequestDatabase,
+                    request_deserializer=service__pb2.DatabaseRequest.FromString,
+                    response_serializer=service__pb2.DatabaseResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -390,6 +422,60 @@ class DatabaseService(object):
             '/database.DatabaseService/ReplicateData',
             service__pb2.WriteRequest.SerializeToString,
             service__pb2.WriteResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RequestLeader(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/database.DatabaseService/RequestLeader',
+            service__pb2.LeaderRequest.SerializeToString,
+            service__pb2.LeaderResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RequestDatabase(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/database.DatabaseService/RequestDatabase',
+            service__pb2.DatabaseRequest.SerializeToString,
+            service__pb2.DatabaseResponse.FromString,
             options,
             channel_credentials,
             insecure,

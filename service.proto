@@ -63,6 +63,17 @@ message UpdateResponse {
   string status = 1;
 }
 
+// Mensajes para la sincronización de la base de datos
+message LeaderRequest {}  // Solicitud para conocer el líder
+message LeaderResponse {
+  string leader_id = 1;
+}
+
+message DatabaseRequest {}  // Solicitud para obtener la base de datos
+message DatabaseResponse {
+  string database = 1;
+}
+
 // Servicio para la BD y Raft
 service DatabaseService {
   rpc ReadData(ReadRequest) returns (ReadResponse);
@@ -73,4 +84,6 @@ service DatabaseService {
   rpc UpdateActiveNodes(UpdateRequest) returns (UpdateResponse);
   rpc DegradeToFollower(DegradeRequest) returns (DegradeResponse);
   rpc ReplicateData(WriteRequest) returns (WriteResponse);
+  rpc RequestLeader(LeaderRequest) returns (LeaderResponse);
+  rpc RequestDatabase(DatabaseRequest) returns (DatabaseResponse);
 }

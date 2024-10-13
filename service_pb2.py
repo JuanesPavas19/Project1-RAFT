@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rservice.proto\x12\x08\x64\x61tabase\"\x1c\n\x0bReadRequest\x12\r\n\x05query\x18\x01 \x01(\t\"\x1e\n\x0cReadResponse\x12\x0e\n\x06result\x18\x01 \x01(\t\"\x1c\n\x0cWriteRequest\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\t\"\x1f\n\rWriteResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"1\n\x0bVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x14\n\x0c\x63\x61ndidate_id\x18\x02 \x01(\t\"\x1f\n\x0cVoteResponse\x12\x0f\n\x07granted\x18\x01 \x01(\x08\")\n\x14\x41ppendEntriesRequest\x12\x11\n\tleader_id\x18\x01 \x01(\t\"(\n\x15\x41ppendEntriesResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x10\n\x0e\x44\x65gradeRequest\"!\n\x0f\x44\x65gradeResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"\x1e\n\x0bPingRequest\x12\x0f\n\x07message\x18\x01 \x01(\t\"A\n\x0cPingResponse\x12\x0c\n\x04role\x18\x01 \x01(\t\x12\r\n\x05state\x18\x02 \x01(\t\x12\x14\n\x0c\x61\x63tive_nodes\x18\x03 \x03(\t\"%\n\rUpdateRequest\x12\x14\n\x0c\x61\x63tive_nodes\x18\x01 \x03(\t\" \n\x0eUpdateResponse\x12\x0e\n\x06status\x18\x01 \x01(\t2\xa5\x04\n\x0f\x44\x61tabaseService\x12\x39\n\x08ReadData\x12\x15.database.ReadRequest\x1a\x16.database.ReadResponse\x12<\n\tWriteData\x12\x16.database.WriteRequest\x1a\x17.database.WriteResponse\x12<\n\x0bRequestVote\x12\x15.database.VoteRequest\x1a\x16.database.VoteResponse\x12P\n\rAppendEntries\x12\x1e.database.AppendEntriesRequest\x1a\x1f.database.AppendEntriesResponse\x12\x35\n\x04Ping\x12\x15.database.PingRequest\x1a\x16.database.PingResponse\x12\x46\n\x11UpdateActiveNodes\x12\x17.database.UpdateRequest\x1a\x18.database.UpdateResponse\x12H\n\x11\x44\x65gradeToFollower\x12\x18.database.DegradeRequest\x1a\x19.database.DegradeResponse\x12@\n\rReplicateData\x12\x16.database.WriteRequest\x1a\x17.database.WriteResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rservice.proto\x12\x08\x64\x61tabase\"\x1c\n\x0bReadRequest\x12\r\n\x05query\x18\x01 \x01(\t\"\x1e\n\x0cReadResponse\x12\x0e\n\x06result\x18\x01 \x01(\t\"\x1c\n\x0cWriteRequest\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\t\"\x1f\n\rWriteResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"1\n\x0bVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x14\n\x0c\x63\x61ndidate_id\x18\x02 \x01(\t\"\x1f\n\x0cVoteResponse\x12\x0f\n\x07granted\x18\x01 \x01(\x08\")\n\x14\x41ppendEntriesRequest\x12\x11\n\tleader_id\x18\x01 \x01(\t\"(\n\x15\x41ppendEntriesResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x10\n\x0e\x44\x65gradeRequest\"!\n\x0f\x44\x65gradeResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"\x1e\n\x0bPingRequest\x12\x0f\n\x07message\x18\x01 \x01(\t\"A\n\x0cPingResponse\x12\x0c\n\x04role\x18\x01 \x01(\t\x12\r\n\x05state\x18\x02 \x01(\t\x12\x14\n\x0c\x61\x63tive_nodes\x18\x03 \x03(\t\"%\n\rUpdateRequest\x12\x14\n\x0c\x61\x63tive_nodes\x18\x01 \x03(\t\" \n\x0eUpdateResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"\x0f\n\rLeaderRequest\"#\n\x0eLeaderResponse\x12\x11\n\tleader_id\x18\x01 \x01(\t\"\x11\n\x0f\x44\x61tabaseRequest\"$\n\x10\x44\x61tabaseResponse\x12\x10\n\x08\x64\x61tabase\x18\x01 \x01(\t2\xb3\x05\n\x0f\x44\x61tabaseService\x12\x39\n\x08ReadData\x12\x15.database.ReadRequest\x1a\x16.database.ReadResponse\x12<\n\tWriteData\x12\x16.database.WriteRequest\x1a\x17.database.WriteResponse\x12<\n\x0bRequestVote\x12\x15.database.VoteRequest\x1a\x16.database.VoteResponse\x12P\n\rAppendEntries\x12\x1e.database.AppendEntriesRequest\x1a\x1f.database.AppendEntriesResponse\x12\x35\n\x04Ping\x12\x15.database.PingRequest\x1a\x16.database.PingResponse\x12\x46\n\x11UpdateActiveNodes\x12\x17.database.UpdateRequest\x1a\x18.database.UpdateResponse\x12H\n\x11\x44\x65gradeToFollower\x12\x18.database.DegradeRequest\x1a\x19.database.DegradeResponse\x12@\n\rReplicateData\x12\x16.database.WriteRequest\x1a\x17.database.WriteResponse\x12\x42\n\rRequestLeader\x12\x17.database.LeaderRequest\x1a\x18.database.LeaderResponse\x12H\n\x0fRequestDatabase\x12\x19.database.DatabaseRequest\x1a\x1a.database.DatabaseResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -59,6 +59,14 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_UPDATEREQUEST']._serialized_end=510
   _globals['_UPDATERESPONSE']._serialized_start=512
   _globals['_UPDATERESPONSE']._serialized_end=544
-  _globals['_DATABASESERVICE']._serialized_start=547
-  _globals['_DATABASESERVICE']._serialized_end=1096
+  _globals['_LEADERREQUEST']._serialized_start=546
+  _globals['_LEADERREQUEST']._serialized_end=561
+  _globals['_LEADERRESPONSE']._serialized_start=563
+  _globals['_LEADERRESPONSE']._serialized_end=598
+  _globals['_DATABASEREQUEST']._serialized_start=600
+  _globals['_DATABASEREQUEST']._serialized_end=617
+  _globals['_DATABASERESPONSE']._serialized_start=619
+  _globals['_DATABASERESPONSE']._serialized_end=655
+  _globals['_DATABASESERVICE']._serialized_start=658
+  _globals['_DATABASESERVICE']._serialized_end=1349
 # @@protoc_insertion_point(module_scope)
