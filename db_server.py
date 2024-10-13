@@ -202,6 +202,28 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
             print(f"Error fetching active nodes from proxy: {e}")
             return []
         
+    # Funciones para Actualizar el Database.csv
+    
+    def RequestLeader(self, request, context):
+        global LEADER_ID, ROLE
+        if ROLE == 'leader':
+            return service_pb2.LeaderResponse(leader_id=SERVER_IP)
+        elif LEADER_ID is not None:
+            return service_pb2.LeaderResponse(leader_id=LEADER_ID)
+        else:
+            return service_pb2.LeaderResponse(leader_id="unknown")
+        
+    def RequestDatabase(self, request, context):
+        try:
+            with open(DB_FILE, mode='r') as csv_file:
+                reader = csv.reader(csv_file)
+                rows = [','.join(row) for row in reader]
+                result = "\n".join(rows)
+            return service_pb2.DatabaseResponse(database=result)
+        except Exception as e:
+            print(f"Error al leer el archivo CSV: {e}")
+            return service_pb2.DatabaseResponse(database="")
+        
 
 def start_election():
     global ROLE, CURRENT_TERM, VOTED_FOR, LEADER_ID, LAST_HEARTBEAT
@@ -267,6 +289,41 @@ def start_heartbeats():
                 #     print(f"[{ROLE}] - Unexpected error sending heartbeat to node {node_ip}: {e}")
         
         time.sleep(1)
+        
+def fetch_leader_and_sync():
+    global OTHER_DB_NODES, LEADER_ID
+    
+    # Paso 1: Identificar al líder
+    leader_ip = None
+    for node_ip in OTHER_DB_NODES:
+        try:
+            channel = grpc.insecure_channel(f'{node_ip}:50051')
+            stub = service_pb2_grpc.DatabaseServiceStub(channel)
+            response = stub.RequestLeader(service_pb2.LeaderRequest())
+            if response.leader_id != "unknown":
+                leader_ip = response.leader_id
+                LEADER_ID = leader_ip
+                break
+        except grpc.RpcError as e:
+            print(f"Error contacting node {node_ip}: {e}")
+
+    if leader_ip:
+        print(f"Leader identified: {leader_ip}")
+        
+        # Paso 2: Solicitar la base de datos del líder
+        try:
+            channel = grpc.insecure_channel(f'{leader_ip}:50051')
+            stub = service_pb2_grpc.DatabaseServiceStub(channel)
+            db_response = stub.RequestDatabase(service_pb2.DatabaseRequest())
+            
+            # Paso 3: Guardar la base de datos recibida
+            with open(DB_FILE, mode='w', newline='') as file:
+                file.write(db_response.database)
+            print(f"Database synchronized from leader {leader_ip}.")
+        except grpc.RpcError as e:
+            print(f"Error fetching database from leader {leader_ip}: {e}")
+    else:
+        print("No leader found. Cannot sync database.")
 
 def serve():
     global ROLE, CURRENT_TERM, VOTED_FOR, LEADER_ID
@@ -280,6 +337,9 @@ def serve():
     server.add_insecure_port('[::]:50051')
     server.start()
     print(f"Database server ({ROLE}) started on port 50051.")
+    
+    # Sincronizar la base de datos del líder
+    fetch_leader_and_sync()
     
     Thread(target=start_election).start()
 
