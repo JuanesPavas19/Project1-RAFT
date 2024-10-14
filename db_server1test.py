@@ -203,15 +203,6 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
             return []
         
     # Funciones para Actualizar el Database.csv
-    
-    # def RequestLeader(self, request, context):
-    #     global LEADER_ID, ROLE
-    #     if ROLE == 'leader':
-    #         return service_pb2.LeaderResponse(leader_id=SERVER_IP)
-    #     elif LEADER_ID is not None:
-    #         return service_pb2.LeaderResponse(leader_id=LEADER_ID)
-    #     else:
-    #         return service_pb2.LeaderResponse(leader_id="unknown")
         
     def RequestDatabase(self, request, context):
         try:
