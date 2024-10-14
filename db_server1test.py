@@ -192,8 +192,8 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
         try:
             channel = grpc.insecure_channel(f'{proxy_ip}:50051')  # Conectar al proxy
             stub = service_pb2_grpc.DatabaseServiceStub(channel)
-            request = service_pb2.PingRequest()  # O algún otro tipo de request que tu proxy pueda manejar
-            response = stub.Ping(request)  # O el método que maneje el proxy para enviar nodos activos
+            request = service_pb2.PingRequest()
+            response = stub.Ping(request)
             print(f"Received active nodes from proxy: {response.active_nodes}")
             ACTIVE_DB_NODES = list(response.active_nodes)  # Convertirlo a lista
             OTHER_DB_NODES = [ip for ip in ACTIVE_DB_NODES if ip != SERVER_IP]
@@ -204,14 +204,14 @@ class DatabaseService(service_pb2_grpc.DatabaseServiceServicer):
         
     # Funciones para Actualizar el Database.csv
     
-    def RequestLeader(self, request, context):
-        global LEADER_ID, ROLE
-        if ROLE == 'leader':
-            return service_pb2.LeaderResponse(leader_id=SERVER_IP)
-        elif LEADER_ID is not None:
-            return service_pb2.LeaderResponse(leader_id=LEADER_ID)
-        else:
-            return service_pb2.LeaderResponse(leader_id="unknown")
+    # def RequestLeader(self, request, context):
+    #     global LEADER_ID, ROLE
+    #     if ROLE == 'leader':
+    #         return service_pb2.LeaderResponse(leader_id=SERVER_IP)
+    #     elif LEADER_ID is not None:
+    #         return service_pb2.LeaderResponse(leader_id=LEADER_ID)
+    #     else:
+    #         return service_pb2.LeaderResponse(leader_id="unknown")
         
     def RequestDatabase(self, request, context):
         try:
@@ -279,51 +279,57 @@ def start_heartbeats():
                 #print
                 #print(f"[{ROLE}] - Heartbeat successfully sent to node {node_ip}")
             except grpc.RpcError as e:
-                print(f"[{ROLE}] - Error sending heartbeat to node {node_ip}: {e}")
-                # status_code = e.code()
-                # if status_code == grpc.StatusCode.UNAVAILABLE:
-                #     print(f"[{ROLE}] - Node {node_ip} is unreachable (Status: UNAVAILABLE)")
-                # elif status_code == grpc.StatusCode.CANCELLED:
-                #     print(f"[{ROLE}] - Heartbeat to node {node_ip} was cancelled (Status: CANCELLED)")
-                # else:
-                #     print(f"[{ROLE}] - Unexpected error sending heartbeat to node {node_ip}: {e}")
+                print(f"[{ROLE}] - Error sending heartbeat to node {node_ip}")
+                status_code = e.code()
+                if status_code == grpc.StatusCode.UNAVAILABLE:
+                    print(f"[{ROLE}] - Node {node_ip} is unreachable (Status: UNAVAILABLE)")
+                elif status_code == grpc.StatusCode.CANCELLED:
+                    print(f"[{ROLE}] - Heartbeat to node {node_ip} was cancelled (Status: CANCELLED)")
+                else:
+                    print(f"[{ROLE}] - Unexpected error sending heartbeat to node {node_ip}")
         
         time.sleep(1)
         
 def fetch_leader_and_sync():
-    global OTHER_DB_NODES, LEADER_ID
-    
-    # Paso 1: Identificar al líder
-    leader_ip = None
+    global ROLE, LEADER_ID
+
+    # Hacer ping a cada nodo para determinar quién es el líder
     for node_ip in OTHER_DB_NODES:
         try:
             channel = grpc.insecure_channel(f'{node_ip}:50051')
             stub = service_pb2_grpc.DatabaseServiceStub(channel)
-            response = stub.RequestLeader(service_pb2.LeaderRequest())
-            if response.leader_id != "unknown":
-                leader_ip = response.leader_id
-                LEADER_ID = leader_ip
-                break
-        except grpc.RpcError as e:
-            print(f"Error contacting node {node_ip}: {e}")
+            ping_request = service_pb2.PingRequest()  # Crear una solicitud de ping
+            response = stub.Ping(ping_request)  # Llamar al método Ping
 
-    if leader_ip:
-        print(f"Leader identified: {leader_ip}")
-        
-        # Paso 2: Solicitar la base de datos del líder
-        try:
-            channel = grpc.insecure_channel(f'{leader_ip}:50051')
-            stub = service_pb2_grpc.DatabaseServiceStub(channel)
-            db_response = stub.RequestDatabase(service_pb2.DatabaseRequest())
-            
-            # Paso 3: Guardar la base de datos recibida
-            with open(DB_FILE, mode='w', newline='') as file:
-                file.write(db_response.database)
-            print(f"Database synchronized from leader {leader_ip}.")
+            # Verificar si el nodo es el líder
+            if response.role == 'leader':
+                LEADER_ID = node_ip
+                print(f"[{ROLE}] - Found leader: {LEADER_ID}")
+                break  # Salir si encontramos al líder
+
         except grpc.RpcError as e:
-            print(f"Error fetching database from leader {leader_ip}: {e}")
-    else:
-        print("No leader found. Cannot sync database.")
+            print(f"[{ROLE}] - Error contacting node {node_ip}")
+
+    if LEADER_ID is not None:
+        # Si encontramos al líder, se puede sincronizar el CSV si es necesario
+        sync_with_leader(LEADER_ID)
+
+def sync_with_leader(leader_ip):
+    """Sincronizar con el líder para obtener datos actualizados."""
+    try:
+        channel = grpc.insecure_channel(f'{leader_ip}:50051')
+        stub = service_pb2_grpc.DatabaseServiceStub(channel)
+        request = service_pb2.DatabaseRequest()  # Solicitud para obtener la base de datos
+        response = stub.RequestDatabase(request)  # Llamar al método RequestDatabase
+
+        # Procesar la respuesta del líder
+        if response.database:
+            with open(DB_FILE, mode='w') as csv_file:
+                csv_file.write(response.database)  # Escribir los datos del líder en el archivo
+            print(f"[{ROLE}] - Database synchronized with leader {leader_ip}")
+
+    except grpc.RpcError as e:
+        print(f"[{ROLE}] - Error syncing with leader {leader_ip}")
 
 def serve():
     global ROLE, CURRENT_TERM, VOTED_FOR, LEADER_ID

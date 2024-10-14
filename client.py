@@ -21,7 +21,7 @@ def run():
         elif action == "write":
             # Solicitud de escritura
             new_id = input("Ingrese ID: ").strip()
-            name = input("Ingrese un NOmbre: ").strip()
+            name = input("Ingrese un Nombre: ").strip()
             email = input("Ingrese un correo: ").strip()
 
             # Crear solicitud de escritura
